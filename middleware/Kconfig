@@ -1,0 +1,17 @@
+#
+# General architecture dependent options
+#
+
+config OPROFILE_EVENT_MULTIPLEX
+	bool "OProfile multiplexing support (EXPERIMENTAL)"
+	default n
+	help
+	  The number of hardware counters is limited. The multiplexing
+	  feature enables OProfile to gather more events than counters
+	  are provided by the hardware. This is realized by switching
+	  between events at an user specified time interval.
+
+	  If unsure, say N.
+
+
+source "project/Kconfig"

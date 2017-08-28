@@ -1,0 +1,11 @@
+#
+# General architecture dependent options
+#
+
+config PROJECT_MAIN
+	bool "simple project"
+	default n
+	---help---
+        It just a example.
+
+

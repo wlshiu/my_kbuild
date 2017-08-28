@@ -14,7 +14,12 @@ clean := -f $(if $(KBUILD_SRC),$(srctree)/)scripts/Makefile.clean obj
 
 # The filename Kbuild has precedence over Makefile
 kbuild-dir := $(if $(filter /%,$(src)),$(src),$(srctree)/$(src))
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 include $(if $(wildcard $(kbuild-dir)/Kbuild), $(kbuild-dir)/Kbuild, $(kbuild-dir)/Makefile)
+endif
+# -mark by wl
 
 # Figure out what we need to build from the various variables
 # ==========================================================================
