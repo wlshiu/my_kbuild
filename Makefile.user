@@ -1,0 +1,68 @@
+#############################################################################
+# USER_TARGET
+#############################################################################
+
+# if_dir_exist = $(if $(wildcard $(srctree)/$(1)), $(1))
+if_exist = $(if $(wildcard $(srctree)/$(1)), $(1))
+if_mk_exist = $(if $(wildcard $(srctree)/$(1)/Makefile), $(1))
+
+
+cmd_KOUT = $(srctree)/$(lastword $(subst /, ,$(subst /.,,$(1))))
+cmd_mk = $(if $(KBUILD_VERBOSE:1=),@)$(MAKE) $(if $(O),-C $(call cmd_KOUT,$(O)) KBUILD_SRC=$(srctree) -f $(srctree)/Makefile) $(1)
+
+cmd_cleandep = for i in $(1); do $(MAKE) $${i}-clean; done
+##################################
+mw-y 	:= middleware/
+proj-y  := project/
+
+user-dirs := $(patsubst %/,%,$(filter %/, \
+			$(mw-y) $(mw-m) \
+		    $(proj-y) $(proj-m) \
+			))
+
+user-alldirs := $(sort $(user-dirs) $(patsubst %/,%,$(filter %/, \
+				$(mw-n) $(mw-) \
+				$(proj-n) $(proj-) \
+				)))
+
+mw-y		:= $(patsubst %/, %/built-in.o, $(mw-y))
+proj-y		:= $(patsubst %/, %/built-in.o, $(proj-y))
+
+export KBUILD_USER_MAIN := $(mw-y) $(proj-y)
+# export KBUILD_LDS := arch/$(SRCARCH)/kernel/vmlinux.lds
+
+# used by scripts/pacmage/Makefile
+export KBUILD_ALLDIRS := $(sort $(filter-out arch/%,$(user-alldirs)) include scripts)
+
+user-deps := $(KBUILD_USER_MAIN)
+
+# Include targets which we want to
+# execute if the rest of the kernel build went well.
+PHONY += user_all
+user_all: scripts/link-vmlinux.sh $(user-deps) FORCE
+	@echo "$@: make start !"
+	+$(call if_changed, link-vmlinux)
+	@echo "$@: make done !"
+
+# The actual objects are generated when descending,
+# make sure no implicit rule kicks in
+$(sort $(user-deps)): $(user-dirs) ;
+
+# Handle descending into subdirectories listed in $(vmlinux-dirs)
+# Preset locale variables to speed up the build process. Limit locale
+# tweaks to this spot to avoid wrong language settings when running
+# make menuconfig etc.
+# Error messages still appears in the original language
+
+PHONY += $(user-dirs)
+$(user-dirs): prepare scripts
+	$(Q)$(MAKE) $(build)=$@
+
+#================================================
+# Clean
+
+user_clean:
+	@echo -e "user clean start !!"
+
+
+

@@ -221,6 +221,8 @@ VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
 export srctree objtree VPATH
 
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 # SUBARCH tells the usermode build what the underlying arch is.  That is set
 # first, and if a usermode build is happening, the "ARCH=um" on the command
 # line overrides the setting of ARCH below.  If a native build is happening,
@@ -233,6 +235,10 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 				  -e s/s390x/s390/ -e s/parisc64/parisc/ \
 				  -e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
 				  -e s/sh[234].*/sh/ -e s/aarch64.*/arm64/ )
+else  # ORG_LINUX_CODE
+SUBARCH := arm
+endif # ORG_LINUX_CODE
+
 
 # Cross compiling and selecting different set of gcc/bin-utils
 # ---------------------------------------------------------------------------
@@ -385,6 +391,8 @@ CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage -fno-tree-loop-im
 
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 USERINCLUDE    := \
 		-I$(srctree)/arch/$(hdr-arch)/include/uapi \
 		-Iarch/$(hdr-arch)/include/generated/uapi \
@@ -394,12 +402,25 @@ USERINCLUDE    := \
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
+
 LINUXINCLUDE    := \
 		-I$(srctree)/arch/$(hdr-arch)/include \
 		-Iarch/$(hdr-arch)/include/generated \
 		$(if $(KBUILD_SRC), -I$(srctree)/include) \
 		-Iinclude \
 		$(USERINCLUDE)
+
+else   # ORG_LINUX_CODE
+USERINCLUDE    := -include $(srctree)/include/kconfig.h
+
+# Use LINUXINCLUDE when you must reference the include/ directory.
+# Needed to be compatible with the O= option
+LINUXINCLUDE    := \
+		$(if $(KBUILD_SRC), -I$(srctree)/include) \
+		-Iinclude \
+		$(USERINCLUDE)
+endif   # ORG_LINUX_CODE
+
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
@@ -415,7 +436,12 @@ KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__ $(call cc-option,-fno-PIE)
 KBUILD_AFLAGS_MODULE  := -DMODULE
 KBUILD_CFLAGS_MODULE  := -DMODULE
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
+else	# ORG_LINUX_CODE
+KBUILD_LDFLAGS_MODULE :=
+endif	# ORG_LINUX_CODE
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
 KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
@@ -470,6 +496,8 @@ ifneq ($(KBUILD_SRC),)
 	    $(srctree) $(objtree) $(VERSION) $(PATCHLEVEL)
 endif
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 # Support for using generic headers in asm-generic
 PHONY += asm-generic
 asm-generic:
@@ -477,6 +505,7 @@ asm-generic:
 	            src=asm obj=arch/$(SRCARCH)/include/generated/asm
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.asm-generic \
 	            src=uapi/asm obj=arch/$(SRCARCH)/include/generated/uapi/asm
+endif	# ORG_LINUX_CODE
 
 # To make sure we do not include .config for any of the *config targets
 # catch them early, and hand them over to scripts/kconfig/Makefile
@@ -485,8 +514,12 @@ asm-generic:
 # For example 'make oldconfig all'.
 # Detect when mixed targets is specified, and make a second invocation
 # of make so .config is not included in this case either (for *config).
-
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 version_h := include/generated/uapi/linux/version.h
+else	# ORG_LINUX_CODE
+version_h :=
+endif	# ORG_LINUX_CODE
 
 no-dot-config-targets := clean mrproper distclean \
 			 cscope gtags TAGS tags help %docs check% coccicheck \
@@ -542,8 +575,7 @@ ifeq ($(config-targets),1)
 ifeq ($(ORG_LINUX_CODE), y)
 include $(srctree)/arch/$(SRCARCH)/Makefile
 export KBUILD_DEFCONFIG KBUILD_KCONFIG
-endif
-# -mark by wl
+endif	# ORG_LINUX_CODE
 
 config: scripts_basic outputmakefile FORCE
 	$(Q)$(MAKE) $(build)=scripts/kconfig $@
@@ -561,6 +593,8 @@ ifeq ($(KBUILD_EXTMOD),)
 # Carefully list dependencies so we do not try to build scripts twice
 # in parallel
 PHONY += scripts
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 scripts: scripts_basic include/config/auto.conf include/config/tristate.conf \
 	 asm-generic
 	$(Q)$(MAKE) $(build)=$(@)
@@ -571,6 +605,14 @@ drivers-y	:= drivers/ sound/ firmware/
 net-y		:= net/
 libs-y		:= lib/
 core-y		:= usr/
+
+else	# ORG_LINUX_CODE
+
+scripts: scripts_basic include/config/auto.conf include/config/tristate.conf
+	$(Q)$(MAKE) $(build)=$(@)
+
+endif	# ORG_LINUX_CODE
+
 endif # KBUILD_EXTMOD
 
 ifeq ($(dot-config),1)
@@ -616,15 +658,14 @@ endif # $(dot-config)
 # command line.
 # This allow a user to issue only 'make' to build a kernel including modules
 # Defaults to vmlinux, but the arch makefile usually adds further targets
-all: vmlinux
-
 # ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
 ifeq ($(ORG_LINUX_CODE), y)
+all: vmlinux
 include $(srctree)/arch/$(SRCARCH)/Makefile
 else
+all: user_all
 include $(srctree)/arch/Makefile
 endif
-# -modify by wl
 
 KBUILD_CFLAGS	+= $(call cc-option,-fno-delete-null-pointer-checks,)
 
@@ -761,12 +802,15 @@ KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
 # use the deterministic mode of AR if available
 KBUILD_ARFLAGS := $(call ar-option,D)
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 # check for 'asm goto'
 ifeq ($(shell $(CONFIG_SHELL) $(srctree)/scripts/gcc-goto.sh $(CC)), y)
 	KBUILD_CFLAGS += -DCC_HAVE_ASM_GOTO
 endif
 
 include $(srctree)/scripts/Makefile.extrawarn
+endif	# ORG_LINUX_CODE
 
 # Add any arch overrides and user supplied CPPFLAGS, AFLAGS and CFLAGS as the
 # last assignments
@@ -784,6 +828,8 @@ ifeq ($(CONFIG_STRIP_ASM_SYMS),y)
 LDFLAGS_vmlinux	+= $(call ld-option, -X,)
 endif
 
+# # ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 # Default kernel image to build when no specific target is given.
 # KBUILD_IMAGE may be overruled on the command line or
 # set in the environment
@@ -852,8 +898,12 @@ mod_sign_cmd = true
 endif
 export mod_sign_cmd
 
+endif	# ORG_LINUX_CODE
 
 ifeq ($(KBUILD_EXTMOD),)
+
+# # ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
 
 vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
@@ -890,8 +940,6 @@ quiet_cmd_link-vmlinux = LINK    $@
 # Include targets which we want to
 # execute if the rest of the kernel build went well.
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
-ifeq ($(ORG_LINUX_CODE), y)
 vmlinux: scripts/link-vmlinux.sh $(vmlinux-deps) FORCE
 ifdef CONFIG_HEADERS_CHECK
 	$(Q)$(MAKE) -f $(srctree)/Makefile headers_check
@@ -903,9 +951,6 @@ ifdef CONFIG_BUILD_DOCSRC
 	$(Q)$(MAKE) $(build)=Documentation
 endif
 	+$(call if_changed,link-vmlinux)
-
-endif
-#- modify by wl
 
 # The actual objects are generated when descending,
 # make sure no implicit rule kicks in
@@ -1136,6 +1181,36 @@ modules modules_install: FORCE
 
 endif # CONFIG_MODULES
 
+else	# ORG_LINUX_CODE
+
+export KBUILD_IMAGE ?= user_img
+
+include $(srctree)/Makefile.user
+
+PHONY += user_all # need ???
+
+# Things we need to do before we recursively start building the kernel
+# or the modules are listed in "prepare".
+# All the preparing..
+PHONY += prepare
+prepare: user_prepare ;
+
+PHONY += user_prepare
+user_prepare: outputmakefile include/config/auto.conf scripts_basic
+	$(Q)$(MAKE) $(build)=.
+
+
+# ---------------------------------------------------------------------------
+
+PHONY += depend dep
+depend dep:
+	@echo '*** Warning: make $@ is unnecessary now.'
+
+endif	# ORG_LINUX_CODE
+
+
+
+
 ###
 # Cleaning is done on three levels.
 # make clean     Delete most generated files
@@ -1171,14 +1246,13 @@ vmlinuxclean:
 	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/link-vmlinux.sh clean
 
 clean: archclean vmlinuxclean
-else # ORG_LINUX_CODE
+
+else 	# ORG_LINUX_CODE
 PHONY += $(clean-dirs) clean
 $(clean-dirs):
 	$(Q)$(MAKE) $(clean)=$(patsubst _clean_%,%,$@)
 
-endif # ORG_LINUX_CODE
-
-# -modify by wl
+endif 	# ORG_LINUX_CODE
 
 
 # mrproper - Delete all generated files, including .config
@@ -1264,15 +1338,20 @@ $(help-board-dirs): help-%:
 		printf "  %-24s - Build for %s\\n" $*/$(b) $(subst _defconfig,,$(b));) \
 		echo '')
 
-
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 # Documentation targets
 # ---------------------------------------------------------------------------
 %docs: scripts_basic FORCE
 	$(Q)$(MAKE) $(build)=scripts build_docproc
 	$(Q)$(MAKE) $(build)=Documentation/DocBook $@
 
+endif 	# ORG_LINUX_CODE
+
 else # KBUILD_EXTMOD
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), n)
 ###
 # External module support.
 # When building external modules the kernel used as basis is considered
@@ -1348,6 +1427,9 @@ help:
 PHONY += prepare scripts
 prepare: ;
 scripts: ;
+
+endif 	# ORG_LINUX_CODE
+
 endif # KBUILD_EXTMOD
 
 clean: $(clean-dirs)
@@ -1371,7 +1453,8 @@ tags TAGS cscope gtags: FORCE
 
 # Scripts to check various things for consistency
 # ---------------------------------------------------------------------------
-
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 PHONY += includecheck versioncheck coccicheck namespacecheck export_report
 
 includecheck:
@@ -1393,9 +1476,22 @@ namespacecheck:
 export_report:
 	$(PERL) $(srctree)/scripts/export_report.pl
 
+else	# ORG_LINUX_CODE
+PHONY += includecheck
+
+includecheck:
+	find $(srctree)/* $(RCS_FIND_IGNORE) \
+		-name '*.[hcS]' -type f -print | sort \
+		| xargs $(PERL) -w $(srctree)/scripts/checkincludes.pl
+
+endif 	# ORG_LINUX_CODE
+
+
 endif #ifeq ($(config-targets),1)
 endif #ifeq ($(mixed-targets),1)
 
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
+ifeq ($(ORG_LINUX_CODE), y)
 PHONY += checkstack kernelrelease kernelversion image_name
 
 # UML needs a little special treatment here.  It wants to use the host
@@ -1428,6 +1524,8 @@ tools/: FORCE
 tools/%: FORCE
 	$(Q)mkdir -p $(objtree)/tools
 	$(Q)$(MAKE) LDFLAGS= MAKEFLAGS="$(filter --j% -j,$(MAKEFLAGS))" O=$(objtree) subdir=tools -C $(src)/tools/ $*
+
+endif	# ORG_LINUX_CODE
 
 # Single targets
 # ---------------------------------------------------------------------------
