@@ -261,7 +261,14 @@ endif # ORG_LINUX_CODE
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
 ARCH		?= $(SUBARCH)
+# ++++++++++++++++++++++++++++++++++++++++++++++++ +mark by wl
+ifeq ($(ORG_LINUX_CODE), y)
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+else
+CROSS_COMPILE	?= $(dir $(shell (which arm-none-eabi-gcc | sed -e 's!/\+!/!g')))arm-none-eabi-
+endif 	# ORG_LINUX_CODE
+
+$(warning CROSS_COMPILE=$(CROSS_COMPILE))
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -664,7 +671,7 @@ all: vmlinux
 include $(srctree)/arch/$(SRCARCH)/Makefile
 else
 all: user_all
-include $(srctree)/arch/Makefile
+include $(srctree)/arch/$(SRCARCH)/Makefile
 endif
 
 KBUILD_CFLAGS	+= $(call cc-option,-fno-delete-null-pointer-checks,)
@@ -1351,7 +1358,7 @@ endif 	# ORG_LINUX_CODE
 else # KBUILD_EXTMOD
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++ +modify by wl
-ifeq ($(ORG_LINUX_CODE), n)
+ifeq ($(ORG_LINUX_CODE), y)
 ###
 # External module support.
 # When building external modules the kernel used as basis is considered

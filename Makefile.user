@@ -3,14 +3,14 @@
 #############################################################################
 
 # if_dir_exist = $(if $(wildcard $(srctree)/$(1)), $(1))
-if_exist = $(if $(wildcard $(srctree)/$(1)), $(1))
-if_mk_exist = $(if $(wildcard $(srctree)/$(1)/Makefile), $(1))
+# if_exist = $(if $(wildcard $(srctree)/$(1)), $(1))
+# if_mk_exist = $(if $(wildcard $(srctree)/$(1)/Makefile), $(1))
 
 
-cmd_KOUT = $(srctree)/$(lastword $(subst /, ,$(subst /.,,$(1))))
-cmd_mk = $(if $(KBUILD_VERBOSE:1=),@)$(MAKE) $(if $(O),-C $(call cmd_KOUT,$(O)) KBUILD_SRC=$(srctree) -f $(srctree)/Makefile) $(1)
+# cmd_KOUT = $(srctree)/$(lastword $(subst /, ,$(subst /.,,$(1))))
+# cmd_mk = $(if $(KBUILD_VERBOSE:1=),@)$(MAKE) $(if $(O),-C $(call cmd_KOUT,$(O)) KBUILD_SRC=$(srctree) -f $(srctree)/Makefile) $(1)
 
-cmd_cleandep = for i in $(1); do $(MAKE) $${i}-clean; done
+# cmd_cleandep = for i in $(1); do $(MAKE) $${i}-clean; done
 ##################################
 mw-y 	:= middleware/
 proj-y  := project/
@@ -41,7 +41,7 @@ user-deps := $(KBUILD_USER_MAIN)
 PHONY += user_all
 user_all: scripts/link-vmlinux.sh $(user-deps) FORCE
 	@echo "$@: make start !"
-	+$(call if_changed, link-vmlinux)
+	+$(call if_changed,link-vmlinux)
 	@echo "$@: make done !"
 
 # The actual objects are generated when descending,

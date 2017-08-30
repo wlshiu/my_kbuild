@@ -2,8 +2,11 @@
 # Makefile
 #
 
-ccflags-y := -I~/sina_merlin2/system/toolchain/gcc5/asdk-5.4.1-a53-EL-4.4-g2.23-a32nt-161027/arm-linux-gnueabi/include/
-$(info ...$(ccflags-y))
+ccflags-y += -I${HOME}/gcc-arm-none-eabi-4_9-2015q1/arm-none-eabi/include
+ccflags-y += -L${HOME}/gcc-arm-none-eabi-4_9-2015q1/arm-none-eabi/lib/libc.a -L${HOME}/gcc-arm-none-eabi-4_9-2015q1/arm-none-eabi/lib/libm.a
+# ccflags-y += -lc -lm
+
+$(warning '$(ccflags-y)')
 
 obj-y := main.o
 

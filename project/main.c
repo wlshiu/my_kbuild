@@ -1,7 +1,10 @@
+
+#include <stdlib.h>
 #include <stdio.h>
 
-void main(void)
+int main(void)
 {
     fprintf(stderr, "hollow world !!\n");
-    return;
+    return 0;
 }
+
