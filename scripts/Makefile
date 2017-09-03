@@ -46,6 +46,12 @@ subdir-$(CONFIG_DTC)         += dtc
 subdir-	+= basic kconfig package
 
 else 	# ORG_LINUX_CODE
+
+# These targets are used internally to avoid "is up to date" messages
+PHONY += build_unifdef
+build_unifdef: $(obj)/unifdef
+	@:
+
 # Let clean descend into subdirs
 subdir-	+= basic kconfig
 endif	# ORG_LINUX_CODE

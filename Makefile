@@ -1190,28 +1190,9 @@ endif # CONFIG_MODULES
 
 else	# ORG_LINUX_CODE
 
-export KBUILD_IMAGE ?= user_img
 
-include $(srctree)/Makefile.user
+include $(srctree)/Makefile.wl
 
-PHONY += user_all # need ???
-
-# Things we need to do before we recursively start building the kernel
-# or the modules are listed in "prepare".
-# All the preparing..
-PHONY += prepare
-prepare: user_prepare ;
-
-PHONY += user_prepare
-user_prepare: outputmakefile include/config/auto.conf scripts_basic
-	$(Q)$(MAKE) $(build)=.
-
-
-# ---------------------------------------------------------------------------
-
-PHONY += depend dep
-depend dep:
-	@echo '*** Warning: make $@ is unnecessary now.'
 
 endif	# ORG_LINUX_CODE
 
@@ -1255,9 +1236,14 @@ vmlinuxclean:
 clean: archclean vmlinuxclean
 
 else 	# ORG_LINUX_CODE
-PHONY += $(clean-dirs) clean
+PHONY += $(clean-dirs) clean userclean
 $(clean-dirs):
 	$(Q)$(MAKE) $(clean)=$(patsubst _clean_%,%,$@)
+
+userclean:
+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/link-vmlinux.sh clean
+
+clean: userclean
 
 endif 	# ORG_LINUX_CODE
 
