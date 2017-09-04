@@ -45,7 +45,7 @@ core-y		:= $(patsubst %/, %/built-in.o, $(core-y))
 # Externally visible symbols (used by link-vmlinux.sh)
 export KBUILD_VMLINUX_INIT :=
 export KBUILD_VMLINUX_MAIN := $(core-y) $(libs-y)
-export KBUILD_LDS          := arch/$(SRCARCH)/vmlinux.lds
+export KBUILD_LDS          := -T project/armelf.lds
 export LDFLAGS_vmlinux
 # used by scripts/pacmage/Makefile
 export KBUILD_ALLDIRS := $(sort $(filter-out arch/%,$(user-alldirs)) arch include scripts)
